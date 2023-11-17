@@ -19,6 +19,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
+# probs don't need ...
 association_table = db.Table(
     "association",
     db.Model.metadata,
@@ -27,40 +28,46 @@ association_table = db.Table(
 )
 
 
-# your classes here
-class Course(db.Model):
+# your sleeps here
+class Sleeps(db.Model):
     """
-    Course Model
+    Sleep Model
     """
 
-    __tablename__ = "course"
+    # id, hours_slept, sleep_qual, dream, date
+
+    __tablename__ = "sleep"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    code = db.Column(db.String, nullable=False)
-    name = db.Column(db.String, nullable=False)
-    assignments = db.relationship("Assignment", cascade="delete")
-    instructors = db.relationship(
-        "User",
-        secondary=association_table,
-        back_populates="courses_as_instructor",
-    )
-    students = db.relationship(
-        "User",
-        secondary=association_table,
-        back_populates="courses_as_student",
-    )
+    hours_slept = db.Column(db.Integer, nullable=False)
+    sleep_quality = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.String, nullable=False)
+    dreams = db.relationship("Dream", cascade="delete")
+
+    # instructors = db.relationship(
+    #     "User",
+    #     secondary=association_table,
+    #     back_populates="courses_as_instructor",
+    # )
+    # students = db.relationship(
+    #     "User",
+    #     secondary=association_table,
+    #     back_populates="courses_as_student",
+    # )
 
     def __init__(self, **kwargs):
         """
-        Initialize a Course object
+        Initialize a Sleep object
         """
-        self.code = kwargs.get("code")
-        self.name = kwargs.get("name")
+        self.hours_slept = kwargs.get("hours_slept")
+        self.sleep_quality = kwargs.get("sleep_quality")
+        self.date = kwargs.get("date")
 
     def serialize(self):
         """
-        Serialize a Course object
+        Serialize a Sleep object
         """
         return {
+            # TODO: fill in...
             "id": self.id,
             "code": self.code,
             "name": self.name,
@@ -71,8 +78,9 @@ class Course(db.Model):
 
     def simple_serialize(self):
         """
-        Serialize a Course object without assignments, students, or instructors
+        Serialize a Sleep object without assignments, students, or instructors
         """
+        # TODO: ...
         return {
             "id": self.id,
             "code": self.code,
@@ -80,16 +88,18 @@ class Course(db.Model):
         }
 
 
-class Assignment(db.Model):
+class Dream(db.Model):
     """
-    Assignment Model
+    Dream Model
     """
 
-    __tablename__ = "assignment"
+    # id, sleep_id, has_description, and description
+
+    __tablename__ = "dream"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.String, nullable=False)
-    due_date = db.Column(db.Integer)
-    course_id = db.Column(db.Integer, db.ForeignKey("course.id"), nullable=False)
+    has_description = db.Column(db.Boolean, nullable=False)
+    description = db.Column(db.String, nullable=False)
+    sleep_id = db.Column(db.Integer, db.ForeignKey("sleep.id"), nullable=False)
 
     def __init__(self, **kwargs):
         """

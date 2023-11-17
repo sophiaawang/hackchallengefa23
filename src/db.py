@@ -1,3 +1,13 @@
+# Create db Sleeps with id, hours_slept, sleep_qual, dream, date
+# Create db Dream with id, sleep_id, has_description, and description (set empty string if no linked sleep)
+# Get all sleeps
+# Post sleep
+# Post sleep by id
+# Delete sleep by id
+# Post dream by sleep_id
+# Get dream by sleep_id
+
+
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()

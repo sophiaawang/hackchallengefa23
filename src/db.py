@@ -1,3 +1,10 @@
+# git add . (to add all -> or just use ui)
+# git commit -m "message here"
+# git push
+# git pull
+
+# also helpful: git status to check what files you added
+
 # Create db Sleeps with id, hours_slept, sleep_qual, dream, date
 # Create db Dream with id, sleep_id, has_description, and description (set empty string if no linked sleep)
 # Get all sleeps

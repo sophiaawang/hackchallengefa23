@@ -30,7 +30,7 @@ association_table = db.Table(
 
 
 # your sleeps here
-class Sleeps(db.Model):
+class Sleep(db.Model):
     """
     Sleep Model
     """
@@ -70,24 +70,14 @@ class Sleeps(db.Model):
         return {
             # TODO: fill in...
             "id": self.id,
-            "code": self.code,
-            "name": self.name,
-            "assignments": [a.simple_serialize() for a in self.assignments],
-            "instructors": [i.simple_serialize() for i in self.instructors],
-            "students": [s.simple_serialize() for s in self.students],
+            "hours_slept": self.code,
+            "sleep_quality": self.name,
+            "date": self.date,
+            "dreams": [d.serialize() for d in self.dreams],
+            #do we do something different for a one-to-one relationship than one-to-many?
         }
 
-    def simple_serialize(self):
-        """
-        Serialize a Sleep object without assignments, students, or instructors
-        """
-        # TODO: ...
-        return {
-            "id": self.id,
-            "code": self.code,
-            "name": self.name,
-        }
-
+ 
 
 class Dream(db.Model):
     """

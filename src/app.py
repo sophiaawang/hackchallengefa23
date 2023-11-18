@@ -1,7 +1,7 @@
 import json
 import time
 
-from db import db, Course, Assignment, User
+from db import db, Sleep, Dream
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -28,54 +28,76 @@ def failure_response(message, code=404):
 
 
 @app.route("/")
-@app.route("/api/courses/")
-def get_courses():
+@app.route("/api/sleeps/")
+def get_all_sleeps():
     """
-    Endpoint for getting all courses
+    Endpoint for getting all sleeps
     """
-    courses = [course.serialize() for course in Course.query.all()]
-    return success_response({"courses": courses})
+    sleeps = [sleep.serialize() for sleep in Sleep.query.all()]
+    return success_response({"sleeps": sleeps})
 
 
-@app.route("/api/courses/", methods=["POST"])
-def create_course():
+@app.route("/api/sleeps/", methods=["POST"])
+def create_sleep():
     """
-    Endpoint for creating a new course
+    Endpoint for creating a new sleep
     """
     body = json.loads(request.data)
-    if body.get("code") is None or body.get("name") is None:
-        return failure_response("class code and/or name field(s) not provided", 400)
-    new_course = Course(
-        code=body.get("code"),
-        name=body.get("name"),
+    if body.get("hours_slept") is None or body.get("sleep_quality") is None or body.get("date") is None:
+        return failure_response("missing fields for sleep description", 400)
+    new_sleep= Sleep(
+        hours_slept=body.get("hours_slept"),
+        sleep_quality=body.get("sleep_quality"),
+        date=body.get("date")
     )
-    db.session.add(new_course)
+    db.session.add(new_sleep)
     db.session.commit()
-    return success_response(new_course.serialize(), 201)
+    return success_response(new_sleep.serialize(), 201)
 
 
-@app.route("/api/courses/<int:course_id>/")
-def get_course(course_id):
+@app.route("/api/sleeps/<int: sleep_id>/", methods=["POST"])
+def update_sleep(sleep_id):
     """
-    Endpoint for getting course by id
+    Endpoint for updating an existing sleep
     """
-    course = Course.query.filter_by(id=course_id).first()
-    if course is None:
-        return failure_response("course not found")
-    return success_response(course.serialize())
-
-
-@app.route("/api/courses/<int:course_id>/", methods=["DELETE"])
-def delete_course(course_id):
-    """
-    Endpoint for deleting a course by id
-    """
-    course = Course.query.filter_by(id=course_id).first()
-    if course is None:
-        return failure_response("course not found")
-    db.session.delete(course)
+    body = json.loads(request.data)
+    sleep = Sleep.query.filter_by(id=sleep_id).first()
+    if sleep is None:
+        return failure_response("sleep not found")
+    
+    if body.get("hours_slept") is not None:
+        setattr(sleep, 'hours_slept', body.get("hours_slept"))
+    if body.get("sleep_quality") is not None:
+        setattr(sleep, 'sleep_quality', body.get("sleep_quality"))
+    if body.get("date") is not None:
+        setattr(sleep, 'date', body.get("date"))
     db.session.commit()
-    return success_response(course.serialize())
+    updated_sleep = Sleep.query.filter_by(id=sleep_id).first()
+    return success_response(updated_sleep.serialize(), 201)
+
+
+@app.route("/api/sleeps/<int:sleep_id>/")
+def get_sleep(sleep_id):
+    """
+    Endpoint for getting sleep by id
+    """
+    sleep = Sleep.query.filter_by(id=sleep_id).first()
+    if sleep is None:
+        return failure_response("sleep not found")
+    return success_response(sleep.serialize())
+
+
+@app.route("/api/courses/<int:sleep_id>/", methods=["DELETE"])
+def delete_sleep(sleep_id):
+    """
+    Endpoint for deleting a sleep by id
+    """
+    sleep = Sleep.query.filter_by(id=sleep_id).first()
+    if sleep is None:
+        return failure_response("sleep not found")
+    db.session.delete(sleep)
+    db.session.commit()
+    return success_response(sleep.serialize())
 
 
 # USER ROUTES

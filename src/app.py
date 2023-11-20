@@ -43,12 +43,16 @@ def create_sleep():
     Endpoint for creating a new sleep
     """
     body = json.loads(request.data)
-    if body.get("hours_slept") is None or body.get("sleep_quality") is None or body.get("date") is None:
+    if (
+        body.get("hours_slept") is None
+        or body.get("sleep_quality") is None
+        or body.get("date") is None
+    ):
         return failure_response("missing fields for sleep description", 400)
-    new_sleep= Sleep(
+    new_sleep = Sleep(
         hours_slept=body.get("hours_slept"),
         sleep_quality=body.get("sleep_quality"),
-        date=body.get("date")
+        date=body.get("date"),
     )
     db.session.add(new_sleep)
     db.session.commit()
@@ -64,13 +68,13 @@ def update_sleep(sleep_id):
     sleep = Sleep.query.filter_by(id=sleep_id).first()
     if sleep is None:
         return failure_response("sleep not found")
-    
+
     if body.get("hours_slept") is not None:
-        setattr(sleep, 'hours_slept', body.get("hours_slept"))
+        setattr(sleep, "hours_slept", body.get("hours_slept"))
     if body.get("sleep_quality") is not None:
-        setattr(sleep, 'sleep_quality', body.get("sleep_quality"))
+        setattr(sleep, "sleep_quality", body.get("sleep_quality"))
     if body.get("date") is not None:
-        setattr(sleep, 'date', body.get("date"))
+        setattr(sleep, "date", body.get("date"))
     db.session.commit()
     updated_sleep = Sleep.query.filter_by(id=sleep_id).first()
     return success_response(updated_sleep.serialize(), 201)
@@ -87,7 +91,7 @@ def get_sleep(sleep_id):
     return success_response(sleep.serialize())
 
 
-@app.route("/api/courses/<int:sleep_id>/", methods=["DELETE"])
+@app.route("/api/sleeps/<int:sleep_id>/", methods=["DELETE"])
 def delete_sleep(sleep_id):
     """
     Endpoint for deleting a sleep by id
@@ -103,81 +107,57 @@ def delete_sleep(sleep_id):
 # USER ROUTES
 
 
-@app.route("/api/users/", methods=["POST"])
-def create_user():
+@app.route("/api/dreams/<int:sleep_id>", methods=["POST"])
+def create_dream(sleep_id):
     """
-    Endpoint for creating a user
+    Endpoint for creating a dream linked to a sleep with sleep_id
     """
+    # create dream
     body = json.loads(request.data)
-    name = body.get("name")
-    netid = body.get("netid")
+    has_description = body.get("has_description")
+    description = body.get("description")
 
-    if name is None or netid is None:
-        return failure_response("name and/or netid field(s) not provided", 400)
-    new_user = User(name=name, netid=netid)
-    db.session.add(new_user)
+    sleep = Sleep.query.filter_by(id=sleep_id).first()
+    if sleep is None:
+        return failure_response("sleep not found")
+    if has_description is None or description is None:
+        has_description = False
+        description = ""
+    new_dream = Dream(has_description=has_description, description=description)
+    db.session.add(new_dream)
     db.session.commit()
-    return success_response(new_user.serialize(), 201)
 
-
-@app.route("/api/users/<int:user_id>/")
-def get_user(user_id):
-    """
-    Endpoint for getting user by id
-    """
-    user = User.query.filter_by(id=user_id).first()
-    if user is None:
-        return failure_response("user not found")
-    return success_response(user.serialize())
-
-
-@app.route("/api/courses/<int:course_id>/add/", methods=["POST"])
-def assign_course(course_id):
-    """
-    Endpoint for assigning a course
-    to a user by id
-    """
-    course = Course.query.filter_by(id=course_id).first()
-    if course is None:
-        return failure_response("course not found")
-    body = json.loads(request.data)
-    user_id = body.get("user_id")
-    user_type = body.get("type")
-
-    user = User.query.filter_by(id=user_id).first()
-    if user is None:
-        return failure_response("user not found")
-    if user_type == "instructor":
-        course.instructors.append(user)
-    else:
-        course.students.append(user)
+    # assign dream
+    sleep.dreams.append(new_dream)
     db.session.commit()
-    return success_response(course.serialize())
+    return success_response(new_dream.serialize(), 201)
 
 
-# ASSIGNMENT ROUTES
-@app.route("/api/courses/<int:course_id>/assignment/", methods=["POST"])
-def create_assignment(course_id):
+@app.route("/api/dreams/<int:dream_id>/")
+def get_dream(dream_id):
     """
-    Endpoint for creating a assignment
-    for a course by id
+    Endpoint for getting dream by id
     """
-    course = Course.query.filter_by(id=course_id).first()
-    if course is None:
-        return failure_response("course not found")
-    body = json.loads(request.data)
-    title = body.get("title")
-    due_date = body.get("due_date")
-    if title is None or due_date is None:
-        return failure_response("no title and/or due date provided", 400)
-    new_assignment = Assignment(
-        title=title,
-        due_date=due_date,
-        course_id=course_id,
-    )
-    db.session.add(new_assignment)
-    db.session.commit()
-    return success_response(new_assignment.serialize(), 201)
+    dream = Dream.query.filter_by(id=dream_id).first()
+    if dream is None:
+        return failure_response("dream not found")
+    return success_response(dream.serialize())
+
+
+@app.route("/api/dreams/common-words/")
+def get_common_words():
+    """
+    Endpoint for returning the five most common words in all the logged dreams
+    """
+    pass
+
+
+@app.route("/api/sleeps/best-hours-slept/")
+def get_best_hours_slept():
+    """
+    Endpoint for returning the min hours slept to get the max sleep quality
+    """
+    pass
 
 
 if __name__ == "__main__":

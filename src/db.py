@@ -68,16 +68,14 @@ class Sleep(db.Model):
         Serialize a Sleep object
         """
         return {
-            # TODO: fill in...
             "id": self.id,
-            "hours_slept": self.code,
-            "sleep_quality": self.name,
+            "hours_slept": self.hours_slept,
+            "sleep_quality": self.sleep_quality,
             "date": self.date,
             "dreams": [d.serialize() for d in self.dreams],
-            #do we do something different for a one-to-one relationship than one-to-many?
+            # do we do something different for a one-to-one relationship than one-to-many?
         }
 
- 
 
 class Dream(db.Model):
     """
@@ -94,74 +92,75 @@ class Dream(db.Model):
 
     def __init__(self, **kwargs):
         """
-        Initialize a assignment object
+        Initialize a dream object
         """
-        self.title = kwargs.get("title")
-        self.due_date = kwargs.get("due_date")
-        self.course_id = kwargs.get("course_id")
+        self.has_description = kwargs.get("has_description")
+        self.description = kwargs.get("description")
+        self.sleep_id = kwargs.get("sleep_id")
 
     def serialize(self):
-        course = Course.query.filter_by(id=self.course_id).first()
+        sleep = Sleep.query.filter_by(id=self.sleep_id).first()
         return {
             "id": self.id,
-            "title": self.title,
-            "due_date": self.due_date,
-            "course": course.simple_serialize(),
+            "has_description": self.has_description,
+            "description": self.description,
+            "sleep": sleep.simple_serialize(),
         }
 
     def simple_serialize(self):
         return {
             "id": self.id,
-            "title": self.title,
-            "due_date": self.due_date,
+            "has_description": self.has_description,
+            "description": self.description,
         }
 
 
-class User(db.Model):
-    """
-    User Model
-    """
+# delete later:
+# class User(db.Model):
+#     """
+#     User Model
+#     """
 
-    __tablename__ = "user"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String, nullable=False)
-    netid = db.Column(db.String, nullable=False)
-    courses_as_instructor = db.relationship(
-        "Course",
-        secondary=association_table,
-        back_populates="instructors",
-    )
-    courses_as_student = db.relationship(
-        "Course",
-        secondary=association_table,
-        back_populates="students",
-    )
+#     __tablename__ = "user"
+#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     name = db.Column(db.String, nullable=False)
+#     netid = db.Column(db.String, nullable=False)
+#     courses_as_instructor = db.relationship(
+#         "Course",
+#         secondary=association_table,
+#         back_populates="instructors",
+#     )
+#     courses_as_student = db.relationship(
+#         "Course",
+#         secondary=association_table,
+#         back_populates="students",
+#     )
 
-    def __init__(self, **kwargs):
-        """
-        Initalize a User object
-        """
-        self.name = kwargs.get("name")
-        self.netid = kwargs.get("netid")
+#     def __init__(self, **kwargs):
+#         """
+#         Initalize a User object
+#         """
+#         self.name = kwargs.get("name")
+#         self.netid = kwargs.get("netid")
 
-    def serialize(self):
-        """
-        Serialize a User object
-        """
-        all_courses = list(set(self.courses_as_instructor + self.courses_as_student))
-        return {
-            "id": self.id,
-            "name": self.name,
-            "netid": self.netid,
-            "courses": [c.simple_serialize() for c in all_courses],
-        }
+#     def serialize(self):
+#         """
+#         Serialize a User object
+#         """
+#         all_courses = list(set(self.courses_as_instructor + self.courses_as_student))
+#         return {
+#             "id": self.id,
+#             "name": self.name,
+#             "netid": self.netid,
+#             "courses": [c.simple_serialize() for c in all_courses],
+#         }
 
-    def simple_serialize(self):
-        """
-        Serialize user object without the course field
-        """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "netid": self.netid,
-        }
+#     def simple_serialize(self):
+#         """
+#         Serialize user object without the course field
+#         """
+#         return {
+#             "id": self.id,
+#             "name": self.name,
+#             "netid": self.netid,
+#         }

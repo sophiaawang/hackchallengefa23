@@ -4,6 +4,11 @@ import time
 from db import db, Sleep, Dream
 from flask import Flask, request, jsonify
 
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from collections import Counter
+
 app = Flask(__name__)
 db_filename = "cms.db"
 
@@ -59,7 +64,7 @@ def create_sleep():
     return success_response(new_sleep.serialize(), 201)
 
 
-@app.route("/api/sleeps/<int: sleep_id>/", methods=["POST"])
+@app.route("/api/sleeps/<int:sleep_id>/", methods=["POST"])
 def update_sleep(sleep_id):
     """
     Endpoint for updating an existing sleep
@@ -107,7 +112,7 @@ def delete_sleep(sleep_id):
 # USER ROUTES
 
 
-@app.route("/api/dreams/<int:sleep_id>", methods=["POST"])
+@app.route("/api/dreams/<int:sleep_id>/", methods=["POST"])
 def create_dream(sleep_id):
     """
     Endpoint for creating a dream linked to a sleep with sleep_id
@@ -123,7 +128,9 @@ def create_dream(sleep_id):
     if has_description is None or description is None:
         has_description = False
         description = ""
-    new_dream = Dream(has_description=has_description, description=description)
+    new_dream = Dream(
+        has_description=has_description, description=description, sleep_id=sleep_id
+    )
     db.session.add(new_dream)
     db.session.commit()
 
@@ -149,7 +156,30 @@ def get_common_words():
     """
     Endpoint for returning the five most common words in all the logged dreams
     """
-    pass
+    sleeps = [sleep.serialize() for sleep in Sleep.query.all()]
+    dreams_words = " ".join(
+        [dream["description"] for sleep in sleeps for dream in sleep["dreams"]]
+    )
+    # stop words are words like the, and, etc. that we don't want to analyze
+    nltk.download("stopwords")
+    nltk.download("punkt")
+    stop_words = set(stopwords.words("english"))
+
+    punct = {",", ".", "-"}
+    word_tokens = word_tokenize(dreams_words)
+
+    filtered_sentence = []
+    for w in word_tokens:
+        if w not in stop_words and w not in punct:
+            filtered_sentence.append(w)
+
+    # print(word_tokens)
+    # print(filtered_sentence)
+
+    Counters = Counter(filtered_sentence)
+    most_common = Counters.most_common(5)
+    # print(most_common)
+    return success_response({"most_common": most_common})
 
 
 @app.route("/api/sleeps/best-hours-slept/")
@@ -157,7 +187,11 @@ def get_best_hours_slept():
     """
     Endpoint for returning the min hours slept to get the max sleep quality
     """
-    pass
+    # get hours slept for max sleep quality (if tie - get the first instance of the max)
+    sleeps = [sleep.serialize() for sleep in Sleep.query.all()]
+    max_qual_sleep = max(sleeps, key=lambda sleep: sleep["sleep_quality"])
+    print(max_qual_sleep["hours_slept"])
+    return success_response({"hours_slept": max_qual_sleep["hours_slept"]})
 
 
 if __name__ == "__main__":

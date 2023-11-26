@@ -1,21 +1,3 @@
-# git add . (to add all -> or just use ui)
-# git commit -m "message here"
-# git push
-# git pull
-
-# also helpful: git status to check what files you added
-
-# Create db Sleeps with id, hours_slept, sleep_qual, dream, date
-# Create db Dream with id, sleep_id, has_description, and description (set empty string if no linked sleep)
-# Get all sleeps
-# Post sleep
-# Post sleep by id
-# Delete sleep by id
-# Post dream by sleep_id
-# Get dream by sleep_id
-
-# testing git ...
-
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -24,8 +6,8 @@ db = SQLAlchemy()
 association_table = db.Table(
     "association",
     db.Model.metadata,
-    db.Column("course_id", db.Integer, db.ForeignKey("course.id")),
-    db.Column("user_id", db.Integer, db.ForeignKey("user.id")),
+    db.Column("sleep_id", db.Integer, db.ForeignKey("sleep.id")),
+    db.Column("dream_id", db.Integer, db.ForeignKey("dream.id")),
 )
 
 
@@ -43,17 +25,6 @@ class Sleep(db.Model):
     sleep_quality = db.Column(db.Integer, nullable=False)
     date = db.Column(db.String, nullable=False)
     dreams = db.relationship("Dream", cascade="delete")
-
-    # instructors = db.relationship(
-    #     "User",
-    #     secondary=association_table,
-    #     back_populates="courses_as_instructor",
-    # )
-    # students = db.relationship(
-    #     "User",
-    #     secondary=association_table,
-    #     back_populates="courses_as_student",
-    # )
 
     def __init__(self, **kwargs):
         """
@@ -73,6 +44,18 @@ class Sleep(db.Model):
             "sleep_quality": self.sleep_quality,
             "date": self.date,
             "dreams": [d.serialize() for d in self.dreams],
+            # do we do something different for a one-to-one relationship than one-to-many?
+        }
+
+    def simple_serialize(self):
+        """
+        Serialize a Sleep object without the dreams field
+        """
+        return {
+            "id": self.id,
+            "hours_slept": self.hours_slept,
+            "sleep_quality": self.sleep_quality,
+            "date": self.date,
             # do we do something different for a one-to-one relationship than one-to-many?
         }
 
@@ -99,6 +82,9 @@ class Dream(db.Model):
         self.sleep_id = kwargs.get("sleep_id")
 
     def serialize(self):
+        """
+        Serialize a Dream object
+        """
         sleep = Sleep.query.filter_by(id=self.sleep_id).first()
         return {
             "id": self.id,
@@ -108,59 +94,11 @@ class Dream(db.Model):
         }
 
     def simple_serialize(self):
+        """
+        Serialize a Dream object without the sleep field
+        """
         return {
             "id": self.id,
             "has_description": self.has_description,
             "description": self.description,
         }
-
-
-# delete later:
-# class User(db.Model):
-#     """
-#     User Model
-#     """
-
-#     __tablename__ = "user"
-#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     name = db.Column(db.String, nullable=False)
-#     netid = db.Column(db.String, nullable=False)
-#     courses_as_instructor = db.relationship(
-#         "Course",
-#         secondary=association_table,
-#         back_populates="instructors",
-#     )
-#     courses_as_student = db.relationship(
-#         "Course",
-#         secondary=association_table,
-#         back_populates="students",
-#     )
-
-#     def __init__(self, **kwargs):
-#         """
-#         Initalize a User object
-#         """
-#         self.name = kwargs.get("name")
-#         self.netid = kwargs.get("netid")
-
-#     def serialize(self):
-#         """
-#         Serialize a User object
-#         """
-#         all_courses = list(set(self.courses_as_instructor + self.courses_as_student))
-#         return {
-#             "id": self.id,
-#             "name": self.name,
-#             "netid": self.netid,
-#             "courses": [c.simple_serialize() for c in all_courses],
-#         }
-
-#     def simple_serialize(self):
-#         """
-#         Serialize user object without the course field
-#         """
-#         return {
-#             "id": self.id,
-#             "name": self.name,
-#             "netid": self.netid,
-#         }

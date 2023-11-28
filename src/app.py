@@ -10,7 +10,7 @@ from nltk.tokenize import word_tokenize
 from collections import Counter
 
 app = Flask(__name__)
-db_filename = "cms.db"
+db_filename = "sneep.db"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///%s" % db_filename
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

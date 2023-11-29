@@ -43,8 +43,7 @@ class Sleep(db.Model):
             "hours_slept": self.hours_slept,
             "sleep_quality": self.sleep_quality,
             "date": self.date,
-            "dreams": [d.serialize() for d in self.dreams],
-            # do we do something different for a one-to-one relationship than one-to-many?
+            "dreams": self.dreams[0].get_description() if self.dreams else "",
         }
 
     def simple_serialize(self):
@@ -102,3 +101,9 @@ class Dream(db.Model):
             "has_description": self.has_description,
             "description": self.description,
         }
+
+    def get_description(self):
+        """
+        Return just the string text of the dream
+        """
+        return self.description

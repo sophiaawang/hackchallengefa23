@@ -20,6 +20,9 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+nltk.download("stopwords")
+nltk.download("punkt")
+
 
 def success_response(data, code=200):
     return jsonify(data), code
@@ -39,7 +42,7 @@ def get_all_sleeps():
     Endpoint for getting all sleeps
     """
     sleeps = [sleep.serialize() for sleep in Sleep.query.all()]
-    return success_response({"sleeps": sleeps})
+    return success_response(sleeps)
 
 
 @app.route("/api/sleeps/", methods=["POST"])
@@ -157,12 +160,8 @@ def get_common_words():
     Endpoint for returning the five most common words in all the logged dreams
     """
     sleeps = [sleep.serialize() for sleep in Sleep.query.all()]
-    dreams_words = " ".join(
-        [dream["description"] for sleep in sleeps for dream in sleep["dreams"]]
-    )
+    dreams_words = " ".join([sleep["dreams"] for sleep in sleeps])
     # stop words are words like the, and, etc. that we don't want to analyze
-    nltk.download("stopwords")
-    nltk.download("punkt")
     stop_words = set(stopwords.words("english"))
 
     punct = {",", ".", "-"}
@@ -178,8 +177,7 @@ def get_common_words():
 
     Counters = Counter(filtered_sentence)
     most_common = Counters.most_common(5)
-    # print(most_common)
-    return success_response({"most_common": most_common})
+    return success_response([word for word, count in most_common])
 
 
 @app.route("/api/sleeps/best-hours-slept/")
@@ -191,7 +189,7 @@ def get_best_hours_slept():
     sleeps = [sleep.serialize() for sleep in Sleep.query.all()]
     max_qual_sleep = max(sleeps, key=lambda sleep: sleep["sleep_quality"])
     print(max_qual_sleep["hours_slept"])
-    return success_response({"hours_slept": max_qual_sleep["hours_slept"]})
+    return success_response(max_qual_sleep["hours_slept"])
 
 
 if __name__ == "__main__":
